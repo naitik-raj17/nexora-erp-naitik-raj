@@ -1,6 +1,6 @@
 # ADR 0001: Build as a modular monolith
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR 0004](0004-single-nextjs-app.md) on 2026-11-20
 - **Date:** 2026-11-20
 
 ## Context

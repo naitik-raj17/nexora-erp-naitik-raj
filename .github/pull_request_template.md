@@ -20,7 +20,7 @@ Closes #
 
 ## Checklist
 
-- [ ] Branch is up to date with `develop`
+- [ ] Branch is up to date with `main`
 - [ ] Commit messages follow Conventional Commits
 - [ ] No secrets or `.env` files committed
-- [ ] API changes documented in Swagger
+- [ ] Role checks added for new server actions; docs updated if the schema changed

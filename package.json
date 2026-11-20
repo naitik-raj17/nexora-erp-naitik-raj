@@ -2,17 +2,12 @@
   "name": "nexora-erp",
   "version": "0.0.0",
   "private": true,
-  "description": "Enterprise resource planning platform: finance, HR, procurement, inventory and reporting",
+  "description": "Nexora ERP: procure-to-stock web application (purchase orders, approvals, goods receipts, inventory)",
   "packageManager": "pnpm@9.15.0",
   "engines": {
     "node": ">=22"
   },
   "scripts": {
-    "dev": "turbo run dev",
-    "build": "turbo run build",
-    "lint": "turbo run lint",
-    "typecheck": "turbo run typecheck",
-    "test": "turbo run test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "db:up": "docker compose up -d",
@@ -24,7 +19,6 @@
     "@commitlint/config-conventional": "^19.6.0",
     "husky": "^9.1.7",
     "lint-staged": "^15.3.0",
-    "prettier": "^3.4.2",
-    "turbo": "^2.3.3"
+    "prettier": "^3.4.2"
   }
 }

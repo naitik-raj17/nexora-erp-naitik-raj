@@ -1,68 +1,72 @@
 # System architecture
 
-Nexora is a **modular monolith**: one Next.js web app calls one NestJS API over REST, and every request passes the same authentication and RBAC guard before it reaches a business module.
+Nexora ERP is **one Next.js application with one PostgreSQL database**. Pages read data on the server, forms call Server Actions, and every write goes through the same chain: session check, input validation, role check, business rules, transaction and audit log.
 
 ![System architecture](images/architecture.png)
 
 ## Components
 
-| Component | Technology | Responsibility |
-| --- | --- | --- |
-| Web app | Next.js 16, React 19 (Vercel) | UI for all roles, server-rendered pages, form validation with Zod |
-| API | NestJS 11 on Node.js 24 (Render) | REST endpoints, business rules, authentication and authorisation |
-| Guard chain | NestJS guards and interceptors | JWT check → RBAC permission check (`module:action`) → validation → audit log |
-| Modules | Core, Finance, HR, Procurement, Inventory, Reporting | Each owns its tables, services and endpoints |
-| Data access | Prisma ORM | Type-safe queries; one transaction per business operation |
-| Database | PostgreSQL 17 | Business records, audit log, reporting views |
-| Jobs and cache | Redis 7 + BullMQ | Payroll runs, PDF generation, emails, caching, token revocation |
-| Object storage | S3-compatible (MinIO locally) | Employee documents, attachments, generated PDFs |
-| Email | SMTP (Mailpit locally) | Approval notifications, purchase orders to vendors |
+| Component      | Technology                                          | Responsibility                                                                        |
+| -------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Pages          | Next.js 16 App Router, React Server Components      | Read data through the service layer and render tables and forms                       |
+| Server Actions | Next.js Server Actions                              | Thin wrappers: get the user, validate with Zod, call one service function, revalidate |
+| Route handler  | `src/app/api/export/[report]/route.ts`              | CSV export                                                                            |
+| Service layer  | `src/server/{core,inventory,procurement,reporting}` | Business rules, role checks, transactions. Unit-tested without Next.js.               |
+| Data access    | Prisma 6                                            | Typed queries, migrations, and raw SQL for constraints and atomic stock updates       |
+| Database       | PostgreSQL 17 (Docker locally, Neon in production)  | 12 tables, 5 enums, check constraints                                                 |
+| Session        | iron-session (encrypted httpOnly cookie) + bcryptjs | Sign-in. The user is reloaded from the database on every request.                     |
 
 ## Module boundaries
 
-- A module talks to another module only through its exported service, never by querying its tables.
-- Cross-module effects happen inside one database transaction (for example, a goods receipt updates stock and drafts the vendor bill together).
-- Reporting reads through SQL views and never writes.
-- Any module can be split into its own service later if load requires it.
+- Each module's service functions are the only code that writes its tables.
+- Procurement calls one Inventory function, `applyReceiptMovements(tx, lines)`, and passes it its open transaction. A goods receipt and its stock changes therefore commit or roll back together.
+- Reporting only reads.
 
-## Request lifecycle
+## Request lifecycle (every write)
 
-1. The browser sends the request with the access token; an expired token is refreshed using the httpOnly refresh cookie.
-2. The auth guard verifies the token; the RBAC guard checks the user's permission for the route (e.g. `inventory:update`).
-3. Zod validates the body; the module service runs the business rules inside a database transaction.
-4. The audit interceptor records the change; the API returns JSON.
+1. The form submits and a Server Action runs on the server.
+2. `getCurrentUser()` decrypts the session cookie and loads the user. A missing or inactive user is sent to sign-in.
+3. A Zod schema validates the input. If it fails, field errors go back to the form.
+4. The service checks the role (`requireRole(user, 'MANAGER', 'ADMIN')`) and the business rules, then writes inside `prisma.$transaction`, including the audit log row.
+5. `revalidatePath()` refreshes the affected pages.
 
-## Key workflows
+## Workflows
 
-### Procure to pay
+### Procure to stock
 
-![Procure-to-pay workflow](images/procure-to-pay.png)
+![Procure-to-stock workflow](images/procure-to-stock.png)
 
-The goods receipt is the integration point: one confirmed receipt raises stock in the chosen warehouse and drafts the vendor bill, which is paid only after the PO, receipt and bill match (three-way match).
+The goods receipt transaction:
 
-### Leave approval
+1. Lock the PO lines with `SELECT ... FOR UPDATE`.
+2. Check that received plus this receipt is not more than ordered, for every line.
+3. Insert the receipt and its lines.
+4. Insert one RECEIPT stock movement per line.
+5. Add each quantity to `stock_levels` with an upsert.
+6. Set the PO to `PARTIALLY_RECEIVED` or `RECEIVED`.
+7. Insert the audit log row.
 
-1. Employee submits a leave request; the system checks the remaining balance.
-2. The Department Manager is notified and approves or rejects.
-3. Approved leave reduces the balance and appears in attendance and payroll.
+### Stock issue and adjustment
 
-### Monthly payroll run
+The movement is inserted and stock changes with one conditional statement:
 
-1. HR Manager starts a run for the month; a background job calculates earnings, deductions and net pay.
-2. HR Manager reviews and confirms; payslip PDFs are generated and employees are notified.
-3. Confirmation posts a salary journal entry to Finance (salary expense debit, payable credit).
+```sql
+UPDATE stock_levels SET on_hand = on_hand + $delta, updated_at = now()
+WHERE product_id = $1 AND warehouse_id = $2 AND on_hand + $delta >= 0;
+```
 
-### Period close
+If no row is updated, the action fails with "Insufficient stock" and the transaction rolls back.
 
-1. Accountant reviews the trial balance; Finance Manager locks the fiscal period.
-2. Locked periods reject new postings; corrections are made as reversing entries in the open period.
+### PO approval
+
+`SUBMITTED → APPROVED` sets `approved_by_id` and `approved_at`. The service rejects approval by the PO's creator, and the database constraint `approved_by_id <> created_by_id` also blocks it. `SUBMITTED → DRAFT` (rejection) stores the reason in the audit log.
 
 ## Deployment
 
-| Environment | Web | API, database, Redis | Trigger |
-| --- | --- | --- | --- |
-| Local | `pnpm dev` | `docker compose up -d` | Manual |
-| Staging | Vercel preview | Render (staging) | Merge to `develop` |
-| Production | Vercel | Render | Merge to `main` (tagged release) |
+| Environment | App                                 | Database                     | Trigger                        |
+| ----------- | ----------------------------------- | ---------------------------- | ------------------------------ |
+| Local       | `pnpm dev`                          | Docker Compose PostgreSQL 17 | Manual                         |
+| Preview     | Vercel preview URL per pull request | Neon branch database         | Pull request opened or updated |
+| Production  | Vercel                              | Neon (main branch)           | Merge to `main`                |
 
-Related decisions: [ADR 0001](adr/0001-modular-monolith.md), [ADR 0002](adr/0002-technology-stack.md), [ADR 0003](adr/0003-authentication-and-rbac.md).
+Related decisions: [ADR 0004](adr/0004-single-nextjs-app.md) and [ADR 0005](adr/0005-fixed-roles-and-session-auth.md).

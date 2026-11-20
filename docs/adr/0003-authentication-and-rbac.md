@@ -1,6 +1,6 @@
 # ADR 0003: JWT with rotating refresh tokens and permission-based RBAC
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR 0005](0005-fixed-roles-and-session-auth.md) on 2026-11-20
 - **Date:** 2026-11-20
 
 ## Context

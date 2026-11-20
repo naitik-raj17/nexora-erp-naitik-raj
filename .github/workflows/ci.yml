@@ -2,9 +2,9 @@ name: CI
 
 on:
   pull_request:
-    branches: [main, develop]
+    branches: [main]
   push:
-    branches: [main, develop]
+    branches: [main]
 
 jobs:
   check:
@@ -22,14 +22,15 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint
-        run: pnpm lint
+      - name: Format check
+        run: pnpm format:check
 
-      - name: Type check
-        run: pnpm typecheck
-
-      - name: Test
-        run: pnpm test
-
-      - name: Build
-        run: pnpm build
+      # Enabled on Day 8 together with the Next.js app:
+      # - name: Lint
+      #   run: pnpm lint
+      # - name: Type check
+      #   run: pnpm typecheck
+      # - name: Unit and integration tests (PostgreSQL service container)
+      #   run: pnpm test
+      # - name: Build
+      #   run: pnpm build

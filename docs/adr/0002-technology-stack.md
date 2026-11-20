@@ -1,6 +1,6 @@
 # ADR 0002: TypeScript stack — Next.js, NestJS, PostgreSQL, Prisma
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR 0004](0004-single-nextjs-app.md) on 2026-11-20
 - **Date:** 2026-11-20
 
 ## Context
@@ -9,15 +9,15 @@ The stack must be fixed before development starts. It needs strong typing, good 
 
 ## Decision
 
-| Layer | Choice |
-| --- | --- |
-| Frontend | Next.js 16 (App Router), React 19, Tailwind CSS 4, shadcn/ui, TanStack Query and Table |
-| Backend | NestJS 11 on Node.js 24 LTS, REST with OpenAPI |
-| Database | PostgreSQL 17 |
-| ORM | Prisma 6 with versioned migrations |
-| Jobs | Redis 7 + BullMQ |
-| Validation | Zod schemas shared by web and API |
-| Monorepo | pnpm workspaces + Turborepo |
+| Layer      | Choice                                                                                 |
+| ---------- | -------------------------------------------------------------------------------------- |
+| Frontend   | Next.js 16 (App Router), React 19, Tailwind CSS 4, shadcn/ui, TanStack Query and Table |
+| Backend    | NestJS 11 on Node.js 24 LTS, REST with OpenAPI                                         |
+| Database   | PostgreSQL 17                                                                          |
+| ORM        | Prisma 6 with versioned migrations                                                     |
+| Jobs       | Redis 7 + BullMQ                                                                       |
+| Validation | Zod schemas shared by web and API                                                      |
+| Monorepo   | pnpm workspaces + Turborepo                                                            |
 
 ## Consequences
 

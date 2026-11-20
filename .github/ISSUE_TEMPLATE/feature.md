@@ -4,7 +4,7 @@ about: A piece of functionality to build
 labels: feature
 ---
 
-**Module:** Core / Finance / HR / Procurement / Inventory / Reporting
+**Module:** Core / Inventory / Procurement / Reporting
 
 **Requirement ID:** FR-xx
 
@@ -12,5 +12,6 @@ labels: feature
 As a <role>, I want <capability> so that <benefit>.
 
 **Acceptance criteria**
+
 - [ ] ...
 - [ ] ...
