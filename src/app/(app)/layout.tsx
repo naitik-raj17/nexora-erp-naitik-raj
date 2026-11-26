@@ -1,8 +1,8 @@
 import { AppShell } from '@/components/app-shell';
+import { requireUser } from '@/server/core/auth';
 
-// Day 9 replaces this placeholder with the signed-in user from the session.
-const PLACEHOLDER_USER = { name: 'Demo Admin', role: 'ADMIN' as const };
-
-export default function AppLayout({ children }: { children: React.ReactNode }) {
-  return <AppShell user={PLACEHOLDER_USER}>{children}</AppShell>;
+// Every page under (app) needs a signed-in, active user.
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  const user = await requireUser();
+  return <AppShell user={user}>{children}</AppShell>;
 }

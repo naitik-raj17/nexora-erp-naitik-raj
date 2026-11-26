@@ -4,6 +4,14 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ## [Unreleased]
 
+### Added — Day 9 (sign-in, roles, users)
+
+- Email and password sign-in and sign-out; bcrypt (cost 12) and an 8-hour encrypted iron-session cookie holding only the user ID. Five attempts per minute per email (FR-01, NFR-01).
+- `getCurrentUser` reloads the user on every request, so deactivated users are signed out at once. `requireRole` guards every service function; `requirePageRole` guards pages (FR-03).
+- Users list with search and pagination, create and edit forms, deactivate and reactivate; Admins cannot demote or deactivate themselves (FR-02).
+- Seed script with one demo user per role.
+- Integration tests run against a separate `nexora_test` database.
+
 ### Added — Day 8 (app shell and database)
 
 - Next.js 16 app (App Router, React 19, TypeScript strict) with Tailwind CSS 4 and shadcn/ui.

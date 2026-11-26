@@ -69,19 +69,27 @@ cd nexora-erp-naitik-raj
 corepack enable && pnpm install
 cp .env.example .env
 docker compose up -d      # PostgreSQL 17
-pnpm db:migrate           # applies prisma/migrations
+pnpm db:migrate && pnpm db:seed
 pnpm dev                  # http://localhost:3000
 ```
 
 Other scripts: `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, `pnpm db:studio`. `GET /api/health` reports app and database status.
 
-The seed script and demo accounts (one per role) arrive on Day 9.
+Demo accounts (password `Nexora@2026` for all three):
+
+| Role    | Email                 |
+| ------- | --------------------- |
+| Admin   | `admin@nexora.test`   |
+| Manager | `manager@nexora.test` |
+| Staff   | `staff@nexora.test`   |
+
+`pnpm test` runs unit and integration tests against a separate `nexora_test` database (created on first run).
 
 ## Repository structure
 
 ```
 ├── src/                 # Next.js app: app/, components/, server/ (service layer), lib/
-├── prisma/              # schema.prisma and migrations; seed.ts from Day 9
+├── prisma/              # schema.prisma, migrations, seed.ts
 ├── tests/               # unit/ (Vitest) and e2e/ (Playwright)
 ├── docs/                # proposal, architecture, ERD, ADRs, images; later the testing report, final report, user manual
 ├── .github/             # CI, CodeQL, Dependabot, PR and issue templates
