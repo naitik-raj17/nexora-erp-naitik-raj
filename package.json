@@ -1,6 +1,6 @@
 {
   "name": "nexora-erp",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "description": "Nexora ERP: procure-to-stock web application (purchase orders, approvals, goods receipts, inventory)",
   "packageManager": "pnpm@9.15.0",
