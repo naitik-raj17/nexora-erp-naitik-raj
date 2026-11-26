@@ -2,13 +2,33 @@ name: CI
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, develop]
   push:
-    branches: [main]
+    branches: [main, develop]
 
 jobs:
   check:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: nexora
+          POSTGRES_PASSWORD: nexora
+          POSTGRES_DB: nexora
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U nexora"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://nexora:nexora@localhost:5432/nexora?schema=public
+      SESSION_SECRET: ci-only-session-secret-at-least-32-characters
+
     steps:
       - uses: actions/checkout@v4
 
@@ -25,12 +45,17 @@ jobs:
       - name: Format check
         run: pnpm format:check
 
-      # Enabled on Day 8 together with the Next.js app:
-      # - name: Lint
-      #   run: pnpm lint
-      # - name: Type check
-      #   run: pnpm typecheck
-      # - name: Unit and integration tests (PostgreSQL service container)
-      #   run: pnpm test
-      # - name: Build
-      #   run: pnpm build
+      - name: Lint
+        run: pnpm lint
+
+      - name: Type check
+        run: pnpm typecheck
+
+      - name: Apply migrations
+        run: pnpm db:deploy
+
+      - name: Unit and integration tests
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build

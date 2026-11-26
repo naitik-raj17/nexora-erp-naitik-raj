@@ -4,3 +4,5 @@ node_modules
 dist
 .next
 coverage
+next-env.d.ts
+prisma/migrations/**/*.sql

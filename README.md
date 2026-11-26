@@ -61,7 +61,7 @@ The day-by-day plan is in [section 10 of the proposal](docs/proposal.md#103-day-
 
 ## Getting started
 
-Application code arrives on Day 8, after approval. These are the commands it will use:
+Requires Node.js 24 (see `.nvmrc`), pnpm 9 through Corepack, and Docker.
 
 ```bash
 git clone https://github.com/naitik-raj17/nexora-erp-naitik-raj.git
@@ -69,17 +69,19 @@ cd nexora-erp-naitik-raj
 corepack enable && pnpm install
 cp .env.example .env
 docker compose up -d      # PostgreSQL 17
-pnpm db:migrate && pnpm db:seed
+pnpm db:migrate           # applies prisma/migrations
 pnpm dev                  # http://localhost:3000
 ```
 
-Demo accounts (one per role) will be listed here once the seed script exists.
+Other scripts: `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, `pnpm db:studio`. `GET /api/health` reports app and database status.
+
+The seed script and demo accounts (one per role) arrive on Day 9.
 
 ## Repository structure
 
 ```
-├── src/                 # Next.js app (Day 8): app/, components/, server/ (service layer), lib/
-├── prisma/              # schema.prisma, migrations, seed.ts (Day 8)
+├── src/                 # Next.js app: app/, components/, server/ (service layer), lib/
+├── prisma/              # schema.prisma and migrations; seed.ts from Day 9
 ├── tests/               # unit/ (Vitest) and e2e/ (Playwright)
 ├── docs/                # proposal, architecture, ERD, ADRs, images; later the testing report, final report, user manual
 ├── .github/             # CI, CodeQL, Dependabot, PR and issue templates

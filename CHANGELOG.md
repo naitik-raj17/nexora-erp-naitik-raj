@@ -4,6 +4,13 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ## [Unreleased]
 
+### Added — Day 8 (app shell and database)
+
+- Next.js 16 app (App Router, React 19, TypeScript strict) with Tailwind CSS 4 and shadcn/ui.
+- App shell: sidebar navigation filtered by role, header, placeholder dashboard, `/api/health`.
+- Prisma schema for the 12 tables and 5 enums in `docs/erd.md`; first migration with the check constraints from rule D8.
+- Vitest set up with a first unit test. CI now runs format, lint, type check, migrations, tests and build against PostgreSQL 17, on `main` and `develop`.
+
 ### Changed — proposal Revision 1 (Day 5, 20 Nov 2026)
 
 - Timeline replaced with Nexora's official 21-day schedule: six phases, milestones on Days 11, 14, 18 and 21.
