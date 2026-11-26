@@ -69,3 +69,58 @@ export function FormAlert({ state }: { state: ActionState }) {
     );
   return null;
 }
+
+/** isActive checkbox; the hidden field makes an unticked box post "false". */
+export function ActiveField({ defaultChecked = true }: { defaultChecked?: boolean }) {
+  return (
+    <label className="flex items-center gap-2 text-sm">
+      <input type="hidden" name="isActive" value="false" />
+      <input
+        type="checkbox"
+        name="isActive"
+        value="true"
+        defaultChecked={defaultChecked}
+        className="size-4"
+      />
+      Active
+    </label>
+  );
+}
+
+export function SelectField({
+  name,
+  label,
+  state,
+  options,
+  defaultValue,
+  placeholder,
+  required,
+}: {
+  name: string;
+  label: string;
+  state: ActionState;
+  options: { value: string; label: string }[];
+  defaultValue?: string;
+  placeholder?: string;
+  required?: boolean;
+}) {
+  return (
+    <Field name={name} label={label} state={state}>
+      <select
+        id={`f-${name}`}
+        name={name}
+        defaultValue={defaultValue ?? ''}
+        required={required}
+        aria-invalid={state.fieldErrors?.[name] ? true : undefined}
+        className={controlClass}
+      >
+        {placeholder !== undefined && <option value="">{placeholder}</option>}
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </Field>
+  );
+}
