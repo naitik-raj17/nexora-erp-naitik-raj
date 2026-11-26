@@ -1,5 +1,5 @@
 /** Conventional Commits, with scopes limited to the project's modules and areas. */
-export default {
+const config = {
   extends: ['@commitlint/config-conventional'],
   rules: {
     'scope-enum': [
@@ -7,16 +7,13 @@ export default {
       'always',
       [
         'core',
-        'finance',
-        'hr',
-        'procurement',
         'inventory',
+        'procurement',
         'reporting',
-        'web',
-        'api',
-        'shared',
-        'config',
+        'ui',
         'db',
+        'auth',
+        'test',
         'ci',
         'deps',
         'docs',
@@ -24,3 +21,5 @@ export default {
     ],
   },
 };
+
+export default config;

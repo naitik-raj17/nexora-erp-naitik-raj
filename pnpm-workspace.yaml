@@ -1,3 +1,4 @@
+# Marks this repository as its own pnpm workspace root, so pnpm never
+# attaches it to a workspace in a parent directory.
 packages:
-  - 'apps/*'
-  - 'packages/*'
+  - '.'
