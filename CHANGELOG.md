@@ -4,6 +4,13 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ## [Unreleased]
 
+### Added — Day 10 (master data)
+
+- Products: list with search by SKU or name, category filter and 25-row pages; create and edit; read-only view for Staff (FR-04).
+- Categories and warehouses (FR-05) and vendors (FR-06): list, search, create, edit, active flag.
+- Admin and Manager create and edit; Staff can only read (permission matrix). Unique SKU, warehouse code and category name give friendly errors.
+- Seed data: 8 categories, 3 warehouses, 20 vendors, 200 products.
+
 ### Added — Day 9 (sign-in, roles, users)
 
 - Email and password sign-in and sign-out; bcrypt (cost 12) and an 8-hour encrypted iron-session cookie holding only the user ID. Five attempts per minute per email (FR-01, NFR-01).
