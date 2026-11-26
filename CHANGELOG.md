@@ -4,6 +4,16 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ## [Unreleased]
 
+## [0.1.0] — M1 working prototype (Day 11)
+
+### Added — Day 11 (stock)
+
+- Stock levels per product and warehouse with search and warehouse filter (FR-07).
+- Stock issue (any role) and stock adjustment (Admin and Manager, audited) with a required reason (FR-08). One conditional `UPDATE` changes stock, so stock never goes below zero, even under concurrent issues.
+- Product movement ledger, newest first, filterable by warehouse and date range (FR-09). Product page shows on hand per warehouse and flags low stock.
+- Seed: opening balances recorded as adjustments, so the ledger explains every stock level.
+- Tests: concurrent issues cannot oversell; `on_hand` equals the sum of movements.
+
 ### Added — Day 10 (master data)
 
 - Products: list with search by SKU or name, category filter and 25-row pages; create and edit; read-only view for Staff (FR-04).

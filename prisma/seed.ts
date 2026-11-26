@@ -139,9 +139,49 @@ async function seedMasterData() {
   );
 }
 
+/** Opening balances as ADJUSTMENT movements, so the ledger always explains stock_levels (rule D7). */
+async function seedOpeningStock() {
+  if ((await prisma.stockMovement.count()) > 0) return;
+  const admin = await prisma.user.findUniqueOrThrow({ where: { email: 'admin@nexora.test' } });
+  const warehouses = await prisma.warehouse.findMany({ orderBy: { code: 'asc' } });
+  const products = await prisma.product.findMany({
+    where: { isActive: true },
+    orderBy: { sku: 'asc' },
+  });
+  const movements: { productId: string; warehouseId: string; quantity: number }[] = [];
+  products.forEach((p, i) => {
+    if (i % 12 === 11) return; // some products have no stock at all
+    const low = i % 9 === 0; // and some sit at or below their reorder level
+    warehouses.forEach((w, wi) => {
+      if (wi > 0 && (i + wi) % 3 === 0) return;
+      const qty = low ? 1 : 20 + ((i * 37 + wi * 11) % 180);
+      movements.push({ productId: p.id, warehouseId: w.id, quantity: qty });
+    });
+  });
+  await prisma.$transaction([
+    prisma.stockMovement.createMany({
+      data: movements.map((m) => ({
+        ...m,
+        type: 'ADJUSTMENT' as const,
+        reason: 'Opening balance',
+        createdById: admin.id,
+      })),
+    }),
+    prisma.stockLevel.createMany({
+      data: movements.map((m) => ({
+        productId: m.productId,
+        warehouseId: m.warehouseId,
+        onHand: m.quantity,
+      })),
+    }),
+  ]);
+  console.log(`opening stock rows: ${movements.length}`);
+}
+
 async function main() {
   await seedUsers();
   await seedMasterData();
+  await seedOpeningStock();
 }
 
 main()

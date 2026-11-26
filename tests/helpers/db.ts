@@ -42,3 +42,33 @@ export async function makeActor(
   });
   return { id: user.id, name: user.name, email: user.email, role: user.role };
 }
+
+/** A category, one product and one warehouse, ready for stock tests. */
+export async function makeStockFixture() {
+  const category = await prisma.category.create({ data: { name: `Cat ${++n}` } });
+  const product = await prisma.product.create({
+    data: {
+      sku: `SKU-${n}`,
+      name: `Product ${n}`,
+      categoryId: category.id,
+      unit: 'PCS',
+      reorderLevel: 5,
+    },
+  });
+  const warehouse = await prisma.warehouse.create({
+    data: { code: `WH-${n}`, name: `Warehouse ${n}` },
+  });
+  return { category, product, warehouse };
+}
+
+/** Checks rule D7: every stock level equals the sum of its movements. */
+export async function stockLedgerMismatches() {
+  return prisma.$queryRaw<{ product_id: string }[]>`
+    SELECT l.product_id
+      FROM stock_levels l
+      LEFT JOIN (
+        SELECT product_id, warehouse_id, SUM(quantity) AS total
+          FROM stock_movements GROUP BY product_id, warehouse_id
+      ) m USING (product_id, warehouse_id)
+     WHERE l.on_hand <> COALESCE(m.total, 0)`;
+}

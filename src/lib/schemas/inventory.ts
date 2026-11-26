@@ -30,3 +30,25 @@ export const productSchema = z.object({
   reorderLevel: decimalString(3),
   isActive: checkbox,
 });
+
+const reason = z.string().trim().min(3, 'Give a reason (at least 3 characters).').max(300);
+
+/** FR-08: goods out. Quantity is entered as a positive number. */
+export const stockIssueSchema = z.object({
+  productId: uuid('Choose a product.'),
+  warehouseId: uuid('Choose a warehouse.'),
+  quantity: decimalString(3, { positive: true }),
+  reason,
+});
+
+/** FR-08: a correction; positive adds stock, negative removes it. */
+export const stockAdjustmentSchema = z.object({
+  productId: uuid('Choose a product.'),
+  warehouseId: uuid('Choose a warehouse.'),
+  quantity: z
+    .string()
+    .trim()
+    .regex(/^-?\d{1,9}(\.\d{1,3})?$/, 'Enter a number with up to 3 decimal places, e.g. 5 or -2.5.')
+    .refine((v) => Number(v) !== 0, 'Must not be zero.'),
+  reason,
+});
