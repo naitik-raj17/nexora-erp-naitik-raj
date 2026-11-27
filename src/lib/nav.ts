@@ -32,7 +32,10 @@ export const NAV_SECTIONS: { title: string; items: NavItem[] }[] = [
   },
   {
     title: 'Admin',
-    items: [{ href: '/users', label: 'Users', roles: ['ADMIN'] }],
+    items: [
+      { href: '/audit-log', label: 'Audit log', roles: ['ADMIN', 'MANAGER'] },
+      { href: '/users', label: 'Users', roles: ['ADMIN'] },
+    ],
   },
 ];
 

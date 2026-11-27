@@ -11,6 +11,12 @@ describe('navForRole', () => {
     expect(hrefs('STAFF')).not.toContain('/users');
   });
 
+  it('shows the audit log to Admin and Manager only (FR-15)', () => {
+    expect(hrefs('ADMIN')).toContain('/audit-log');
+    expect(hrefs('MANAGER')).toContain('/audit-log');
+    expect(hrefs('STAFF')).not.toContain('/audit-log');
+  });
+
   it('drops sections with no visible items', () => {
     expect(navForRole('STAFF').map((s) => s.title)).not.toContain('Admin');
   });

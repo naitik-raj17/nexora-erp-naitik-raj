@@ -15,6 +15,16 @@ export const vendorSchema = z.object({
   isActive: checkbox,
 });
 
+/** Form lines arrive as a JSON string from a hidden field; arrays pass through (tests, services). */
+function parseJson(v: unknown) {
+  if (typeof v !== 'string') return v;
+  try {
+    return JSON.parse(v);
+  } catch {
+    return null;
+  }
+}
+
 export const PO_STATUSES = [
   'DRAFT',
   'SUBMITTED',
@@ -42,14 +52,7 @@ export const purchaseOrderSchema = z.object({
     .pipe(z.iso.date('Enter a valid date.').nullable()),
   notes: optionalText(1000),
   lines: z.preprocess(
-    (v) => {
-      if (typeof v !== 'string') return v;
-      try {
-        return JSON.parse(v);
-      } catch {
-        return null;
-      }
-    },
+    parseJson,
     z
       .array(poLineSchema, 'Add at least one line.')
       .min(1, 'Add at least one line.')
@@ -63,4 +66,30 @@ export const purchaseOrderSchema = z.object({
 
 export const rejectSchema = z.object({
   reason: z.string().trim().min(3, 'Give a reason (at least 3 characters).').max(500),
+});
+
+/** Receipt form field name for a PO line's quantity; field errors use the same key. */
+export const qtyField = (lineId: string) => `qty:${lineId}`;
+
+/** FR-12. Lines with quantity 0 are skipped; at least one must be above zero. */
+export const goodsReceiptSchema = z.object({
+  receivedOn: z.iso.date('Enter a valid date.'),
+  notes: optionalText(1000),
+  lines: z.preprocess(
+    parseJson,
+    z
+      .array(
+        z.object({ purchaseOrderLineId: uuid('Unknown line.'), quantity: decimalString(3) }),
+        'Enter the quantities received.',
+      )
+      .max(100)
+      .refine(
+        (lines) => new Set(lines.map((l) => l.purchaseOrderLineId)).size === lines.length,
+        'Each line can appear only once.',
+      )
+      .refine(
+        (lines) => lines.some((l) => Number(l.quantity) > 0),
+        'Enter a quantity for at least one line.',
+      ),
+  ),
 });

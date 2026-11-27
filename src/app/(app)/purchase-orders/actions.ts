@@ -12,6 +12,7 @@ import {
   submitPurchaseOrder,
   updatePurchaseOrder,
 } from '@/server/procurement/purchase-orders';
+import { receiveGoods } from '@/server/procurement/receipts';
 
 /** Save a draft; with intent=submit it is submitted for approval in the same step. */
 export async function savePoAction(
@@ -63,4 +64,26 @@ export async function transitionPoAction(
   revalidatePath('/purchase-orders');
   revalidatePath(`/purchase-orders/${id}`);
   return { success: DONE[transition] };
+}
+
+/** FR-12: the receive form posts one `qty:<lineId>` field per PO line. */
+export async function receiveGoodsAction(
+  id: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const actor = await requireUser();
+  const form = formToObject(formData);
+  const lines = Object.entries(form)
+    .filter(([k]) => k.startsWith('qty:'))
+    .map(([k, v]) => ({ purchaseOrderLineId: k.slice(4), quantity: v.trim() || '0' }));
+  try {
+    await receiveGoods(actor, id, { receivedOn: form.receivedOn, notes: form.notes, lines });
+  } catch (e) {
+    return toActionState(e);
+  }
+  revalidatePath('/purchase-orders');
+  revalidatePath(`/purchase-orders/${id}`);
+  revalidatePath('/stock');
+  redirect(`/purchase-orders/${id}`);
 }

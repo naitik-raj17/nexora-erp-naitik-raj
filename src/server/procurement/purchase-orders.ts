@@ -81,7 +81,16 @@ export async function getPurchaseOrder(actor: Actor, id: string) {
             orderBy: { product: { name: 'asc' } },
           },
           goodsReceipts: {
-            include: { receivedBy: { select: { name: true } } },
+            include: {
+              receivedBy: { select: { name: true } },
+              lines: {
+                select: {
+                  id: true,
+                  quantity: true,
+                  purchaseOrderLine: { select: { product: { select: { sku: true } } } },
+                },
+              },
+            },
             orderBy: { grnNumber: 'asc' },
           },
         },
@@ -158,7 +167,7 @@ export async function createPurchaseOrder(actor: Actor, input: unknown) {
 }
 
 /** Lock the PO row so concurrent status changes are serialised. */
-async function lockPo(tx: Tx, id: string) {
+export async function lockPo(tx: Tx, id: string) {
   if (!isUuid(id)) throw new NotFoundError('Purchase order');
   const rows = await tx.$queryRaw<
     { id: string }[]

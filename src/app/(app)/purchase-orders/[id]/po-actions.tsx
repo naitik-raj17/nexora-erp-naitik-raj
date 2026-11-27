@@ -9,7 +9,7 @@ import { transitionPoAction } from '../actions';
 
 type Props = {
   id: string;
-  can: { edit: boolean; approve: boolean; cancel: boolean };
+  can: { edit: boolean; approve: boolean; cancel: boolean; receive: boolean };
 };
 
 /** The buttons a user may use on this PO; the server checks every one again. */
@@ -17,7 +17,7 @@ export function PoActions({ id, can }: Props) {
   const [state, run] = useActionState(transitionPoAction.bind(null, id), initialState);
   // Shown even when no buttons remain (e.g. right after cancelling).
   const alert = <FormAlert state={state} />;
-  if (!can.edit && !can.approve && !can.cancel) return alert;
+  if (!can.edit && !can.approve && !can.cancel && !can.receive) return alert;
 
   return (
     <div className="grid gap-3">
@@ -40,6 +40,11 @@ export function PoActions({ id, can }: Props) {
               Submit for approval
             </SubmitButton>
           </>
+        )}
+        {can.receive && (
+          <Button asChild>
+            <Link href={`/purchase-orders/${id}/receive`}>Receive goods</Link>
+          </Button>
         )}
         {can.approve && (
           <SubmitButton name="transition" value="approve">

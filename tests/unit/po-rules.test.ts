@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PoStatus, Role } from '@prisma/client';
-import { canApprovePo, canCancelPo, canEditPo } from '@/server/procurement/po-rules';
+import { canApprovePo, canCancelPo, canEditPo, canReceivePo } from '@/server/procurement/po-rules';
 
 const actor = (role: Role, id = 'me') => ({ id, role });
 const po = (status: PoStatus, createdById = 'me') => ({ status, createdById });
@@ -26,5 +26,12 @@ describe('PO permission rules', () => {
     expect(canCancelPo(actor('STAFF'), po('SUBMITTED'))).toBe(true);
     expect(canCancelPo(actor('STAFF'), po('APPROVED'))).toBe(false);
     expect(canCancelPo(actor('STAFF'), po('DRAFT', 'other'))).toBe(false);
+  });
+
+  it('receive: approved or partly received only', () => {
+    expect(canReceivePo(po('APPROVED'))).toBe(true);
+    expect(canReceivePo(po('PARTIALLY_RECEIVED'))).toBe(true);
+    for (const s of ['DRAFT', 'SUBMITTED', 'RECEIVED', 'CANCELLED'] as const)
+      expect(canReceivePo(po(s))).toBe(false);
   });
 });

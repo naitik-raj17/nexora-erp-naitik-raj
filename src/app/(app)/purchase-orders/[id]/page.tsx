@@ -13,7 +13,7 @@ import {
 } from '@/lib/format';
 import { orNotFound } from '@/lib/not-found';
 import { requireUser } from '@/server/core/auth';
-import { canApprovePo, canCancelPo, canEditPo } from '@/server/procurement/po-rules';
+import { canApprovePo, canCancelPo, canEditPo, canReceivePo } from '@/server/procurement/po-rules';
 import { getPurchaseOrder } from '@/server/procurement/purchase-orders';
 import { PoActions } from './po-actions';
 
@@ -36,6 +36,7 @@ export default async function PurchaseOrderPage({ params }: { params: Promise<{ 
     edit: canEditPo(actor, po),
     approve: canApprovePo(actor, po),
     cancel: canCancelPo(actor, po),
+    receive: canReceivePo(po),
   };
   const last = po.history.at(-1);
   const rejection =
@@ -141,7 +142,14 @@ export default async function PurchaseOrderPage({ params }: { params: Promise<{ 
           <ul className="space-y-1 text-sm">
             {po.goodsReceipts.map((g) => (
               <li key={g.id}>
-                {grnLabel(g.grnNumber)} · {formatDate(g.receivedOn)} · {g.receivedBy.name}
+                <span className="font-medium">{grnLabel(g.grnNumber)}</span> ·{' '}
+                {formatDate(g.receivedOn)} · {g.receivedBy.name} ·{' '}
+                <span className="text-muted-foreground">
+                  {g.lines
+                    .map((gl) => `${gl.purchaseOrderLine.product.sku} × ${formatQty(gl.quantity)}`)
+                    .join(', ')}
+                </span>
+                {g.notes && <span className="text-muted-foreground"> · {g.notes}</span>}
               </li>
             ))}
           </ul>
@@ -156,6 +164,12 @@ export default async function PurchaseOrderPage({ params }: { params: Promise<{ 
               <span className="font-medium">{ACTION_LABEL[h.action] ?? h.action}</span> by{' '}
               {h.user.name}
               <span className="text-muted-foreground"> · {formatDateTime(h.createdAt)}</span>
+              {h.action === 'RECEIVED' && (
+                <span className="text-muted-foreground">
+                  {' '}
+                  · {grnLabel((h.details as { grnNumber: number }).grnNumber)}
+                </span>
+              )}
               {h.action === 'REJECTED' && (
                 <span className="text-muted-foreground">
                   {' '}
