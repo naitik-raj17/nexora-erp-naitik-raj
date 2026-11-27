@@ -178,10 +178,78 @@ async function seedOpeningStock() {
   console.log(`opening stock rows: ${movements.length}`);
 }
 
+/** A handful of POs in each pre-receipt status (expanded to 100 with receipts on Day 14). */
+async function seedPurchaseOrders() {
+  if ((await prisma.purchaseOrder.count()) > 0) return;
+  const users = Object.fromEntries(
+    (await prisma.user.findMany({ where: { email: { in: USERS.map((u) => u.email) } } })).map(
+      (u) => [u.role, u],
+    ),
+  );
+  const vendors = await prisma.vendor.findMany({
+    where: { isActive: true },
+    orderBy: { name: 'asc' },
+  });
+  const warehouses = await prisma.warehouse.findMany({ orderBy: { code: 'asc' } });
+  const products = await prisma.product.findMany({
+    where: { isActive: true },
+    orderBy: { sku: 'asc' },
+  });
+  const plan = [
+    'DRAFT',
+    'SUBMITTED',
+    'SUBMITTED',
+    'APPROVED',
+    'APPROVED',
+    'APPROVED',
+    'CANCELLED',
+    'REJECTED',
+  ] as const;
+
+  for (const [i, kind] of [...plan, ...plan].entries()) {
+    const creator = i % 3 === 0 ? users.MANAGER! : users.STAFF!;
+    const approver = creator.role === 'MANAGER' ? users.ADMIN! : users.MANAGER!;
+    const status = kind === 'REJECTED' ? 'DRAFT' : kind;
+    const po = await prisma.purchaseOrder.create({
+      data: {
+        vendorId: vendors[i % vendors.length]!.id,
+        warehouseId: warehouses[i % warehouses.length]!.id,
+        status,
+        expectedDate: new Date(Date.UTC(2026, 11, 1 + (i % 20))),
+        createdById: creator.id,
+        ...(status === 'APPROVED' ? { approvedById: approver.id, approvedAt: new Date() } : {}),
+        lines: {
+          create: [0, 1, 2].slice(0, 1 + (i % 3)).map((k) => ({
+            productId: products[(i * 7 + k * 13) % products.length]!.id,
+            quantity: 10 + ((i + k) % 5) * 10,
+            unitPrice: 25 + ((i * 3 + k) % 40) * 5,
+          })),
+        },
+      },
+    });
+    const log = (
+      action: 'CREATED' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'CANCELLED',
+      userId: string,
+      details?: object,
+    ) =>
+      prisma.auditLog.create({
+        data: { userId, action, entity: 'PurchaseOrder', entityId: po.id, details },
+      });
+    await log('CREATED', creator.id);
+    if (kind !== 'DRAFT' && kind !== 'CANCELLED') await log('SUBMITTED', creator.id);
+    if (kind === 'APPROVED') await log('APPROVED', approver.id);
+    if (kind === 'REJECTED')
+      await log('REJECTED', approver.id, { reason: 'Please get a second quotation.' });
+    if (kind === 'CANCELLED') await log('CANCELLED', creator.id);
+  }
+  console.log(`purchase orders: ${plan.length * 2}`);
+}
+
 async function main() {
   await seedUsers();
   await seedMasterData();
   await seedOpeningStock();
+  await seedPurchaseOrders();
 }
 
 main()
